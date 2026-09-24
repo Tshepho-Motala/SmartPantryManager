@@ -2,11 +2,13 @@ package com.example.smartpantrymanager;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +17,6 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private TextView textZeroMatch;
     private DatabaseHelper dbHelper;
-    private RecipeAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,12 +24,63 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
         setContentView(R.layout.activity_suggested_recipes);
         setTitle("Suggested Recipes");
 
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
+
         dbHelper = new DatabaseHelper(this);
         recyclerView = findViewById(R.id.recyclerSuggestedRecipes);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         textZeroMatch = findViewById(R.id.textZeroMatch);
 
+        setupBottomNav(R.id.nav_suggested);
         loadSuggestedRecipes();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadSuggestedRecipes();
+        setupBottomNav(R.id.nav_suggested);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void setupBottomNav(int selectedItemId) {
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNavigationView);
+        if (bottomNav != null) {
+            bottomNav.setSelectedItemId(selectedItemId);
+            bottomNav.setOnItemSelectedListener(item -> {
+                int id = item.getItemId();
+                if (id == selectedItemId) {
+                    return true;
+                }
+                if (id == R.id.nav_pantry) {
+                    startActivity(new Intent(this, PantryListActivity.class));
+                    finish();
+                    return true;
+                } else if (id == R.id.nav_suggested) {
+                    return true;
+                } else if (id == R.id.nav_recipes) {
+                    startActivity(new Intent(this, AllRecipesActivity.class));
+                    finish();
+                    return true;
+                } else if (id == R.id.nav_settings) {
+                    startActivity(new Intent(this, SettingsActivity.class));
+                    finish();
+                    return true;
+                }
+                return false;
+            });
+        }
     }
 
     private void loadSuggestedRecipes() {
@@ -62,7 +114,7 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
         } else {
             textZeroMatch.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
-            adapter = new RecipeAdapter(suggested, pantryItems, recipe -> {
+            RecipeAdapter adapter = new RecipeAdapter(suggested, pantryItems, recipe -> {
                 Intent intent = new Intent(SuggestedRecipesActivity.this, RecipeDetailActivity.class);
                 intent.putExtra("RECIPE", recipe);
                 startActivity(intent);

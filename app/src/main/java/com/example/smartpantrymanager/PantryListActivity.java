@@ -42,15 +42,12 @@ public class PantryListActivity extends AppCompatActivity {
                     return true;
                 } else if (id == R.id.nav_suggested) {
                     startActivity(new Intent(PantryListActivity.this, SuggestedRecipesActivity.class));
-                    finish();
                     return true;
                 } else if (id == R.id.nav_recipes) {
                     startActivity(new Intent(PantryListActivity.this, AllRecipesActivity.class));
-                    finish();
                     return true;
                 } else if (id == R.id.nav_settings) {
                     startActivity(new Intent(PantryListActivity.this, SettingsActivity.class));
-                    finish();
                     return true;
                 }
                 return false;

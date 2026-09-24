@@ -1,6 +1,7 @@
 package com.example.smartpantrymanager;
 
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.List;
@@ -11,6 +12,11 @@ public class RecipeDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recipe_detail);
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
 
         Recipe recipe = (Recipe) getIntent().getSerializableExtra("RECIPE");
         if (recipe == null) {
@@ -58,6 +64,15 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
         textIngredients.setText(ingBuilder.toString().trim());
         textInstructions.setText(recipe.getInstructions());
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private boolean isIngredientMatch(String reqName, String pantryName) {

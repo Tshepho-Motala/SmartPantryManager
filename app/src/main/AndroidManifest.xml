@@ -13,7 +13,7 @@
         android:theme="@style/Theme.SmartPantryManager">
 
         <activity
-            android:name=".PantryListActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.SmartPantryManager"
@@ -23,6 +23,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".PantryListActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.SmartPantryManager"/>
 
         <activity
             android:name=".AddEditIngredientActivity"
