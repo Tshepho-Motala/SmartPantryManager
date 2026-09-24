@@ -5,20 +5,23 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "smart_pantry.db";
+    private static final String DATABASE_NAME = "smart_pantry_manager.db";
     private static final int DATABASE_VERSION = 2;
 
-    // Tables
-    private static final String TABLE_PANTRY = "pantry";
-    private static final String TABLE_RECIPES = "recipes";
-    private static final String TABLE_RECIPE_INGREDIENTS = "recipe_ingredients";
+    public static final String TABLE_PANTRY = "pantry";
+    public static final String COLUMN_ID = "_id";
+    public static final String COLUMN_NAME = "name";
+    public static final String COLUMN_QUANTITY = "quantity";
+    public static final String COLUMN_UNIT = "unit";
+    public static final String COLUMN_EXPIRY = "expiry_date";
+
+    public static final String TABLE_RECIPES = "recipes";
+    public static final String TABLE_RECIPE_INGREDIENTS = "recipe_ingredients";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -26,17 +29,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String createPantryTable = "CREATE TABLE " + TABLE_PANTRY + " (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "name TEXT NOT NULL, " +
-                "quantity REAL NOT NULL, " +
-                "unit TEXT NOT NULL, " +
-                "expiry_date TEXT)";
+        String CREATE_PANTRY_TABLE = "CREATE TABLE " + TABLE_PANTRY + " ("
+                + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + COLUMN_NAME + " TEXT NOT NULL, "
+                + COLUMN_QUANTITY + " REAL NOT NULL, "
+                + COLUMN_UNIT + " TEXT NOT NULL, "
+                + COLUMN_EXPIRY + " TEXT)";
+        db.execSQL(CREATE_PANTRY_TABLE);
 
         String createRecipesTable = "CREATE TABLE " + TABLE_RECIPES + " (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "title TEXT NOT NULL, " +
                 "instructions TEXT NOT NULL)";
+        db.execSQL(createRecipesTable);
 
         String createRecipeIngredientsTable = "CREATE TABLE " + TABLE_RECIPE_INGREDIENTS + " (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -45,9 +50,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "quantity REAL NOT NULL, " +
                 "unit TEXT NOT NULL, " +
                 "FOREIGN KEY(recipe_id) REFERENCES " + TABLE_RECIPES + "(id))";
-
-        db.execSQL(createPantryTable);
-        db.execSQL(createRecipesTable);
         db.execSQL(createRecipeIngredientsTable);
 
         seedRecipes(db);
@@ -62,63 +64,65 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    // --- PANTRY CRUD OPERATIONS ---
-
-    public long addPantryItem(PantryItem item) {
+    // --- PANTRY CRUD ---
+    public long addPantryItem(Ingredient ingredient) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put("name", item.getName().trim().toLowerCase());
-        values.put("quantity", item.getQuantity());
-        values.put("unit", item.getUnit().trim().toLowerCase());
-        values.put("expiry_date", item.getExpiryDate());
+        values.put(COLUMN_NAME, ingredient.getName().trim().toLowerCase());
+        values.put(COLUMN_QUANTITY, ingredient.getQuantity());
+        values.put(COLUMN_UNIT, ingredient.getUnit().trim().toLowerCase());
+        values.put(COLUMN_EXPIRY, ingredient.getExpiryDate());
+
         long id = db.insert(TABLE_PANTRY, null, values);
         db.close();
         return id;
     }
 
-    public List<PantryItem> getAllPantryItems() {
-        List<PantryItem> items = new ArrayList<>();
+    public List<Ingredient> getAllPantryItems() {
+        List<Ingredient> itemList = new ArrayList<>();
+        String selectQuery = "SELECT * FROM " + TABLE_PANTRY + " ORDER BY " + COLUMN_NAME + " ASC";
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_PANTRY + " ORDER BY name ASC", null);
+        Cursor cursor = db.rawQuery(selectQuery, null);
 
         if (cursor.moveToFirst()) {
             do {
-                PantryItem item = new PantryItem(
-                        cursor.getInt(cursor.getColumnIndexOrThrow("id")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("name")),
-                        cursor.getDouble(cursor.getColumnIndexOrThrow("quantity")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("unit")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("expiry_date"))
-                );
-                items.add(item);
+                long id = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_ID));
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME));
+                double quantity = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_QUANTITY));
+                String unit = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_UNIT));
+                String expiry = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EXPIRY));
+
+                Ingredient ing = new Ingredient(id, name, quantity, unit);
+                ing.setExpiryDate(expiry);
+                itemList.add(ing);
             } while (cursor.moveToNext());
         }
         cursor.close();
         db.close();
-        return items;
+        return itemList;
     }
 
-    public int updatePantryItem(PantryItem item) {
+    public int updatePantryItem(Ingredient ingredient) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put("name", item.getName().trim().toLowerCase());
-        values.put("quantity", item.getQuantity());
-        values.put("unit", item.getUnit().trim().toLowerCase());
-        values.put("expiry_date", item.getExpiryDate());
+        values.put(COLUMN_NAME, ingredient.getName().trim().toLowerCase());
+        values.put(COLUMN_QUANTITY, ingredient.getQuantity());
+        values.put(COLUMN_UNIT, ingredient.getUnit().trim().toLowerCase());
+        values.put(COLUMN_EXPIRY, ingredient.getExpiryDate());
 
-        int rows = db.update(TABLE_PANTRY, values, "id = ?", new String[]{String.valueOf(item.getId())});
+        int rows = db.update(TABLE_PANTRY, values, COLUMN_ID + " = ?",
+                new String[]{String.valueOf(ingredient.getId())});
         db.close();
         return rows;
     }
 
-    public void deletePantryItem(int id) {
+    public void deletePantryItem(long id) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_PANTRY, "id = ?", new String[]{String.valueOf(id)});
+        db.delete(TABLE_PANTRY, COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
         db.close();
     }
 
-    // --- RECIPE RETRIEVAL ---
-
+    // --- RECIPES ---
     public List<Recipe> getAllRecipes() {
         List<Recipe> recipes = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
@@ -126,7 +130,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         if (cursor.moveToFirst()) {
             do {
-                int recipeId = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
+                long recipeId = cursor.getLong(cursor.getColumnIndexOrThrow("id"));
                 String title = cursor.getString(cursor.getColumnIndexOrThrow("title"));
                 String instructions = cursor.getString(cursor.getColumnIndexOrThrow("instructions"));
 
@@ -139,25 +143,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return recipes;
     }
 
-    private List<Recipe.RecipeIngredient> getRecipeIngredients(SQLiteDatabase db, int recipeId) {
+    private List<Recipe.RecipeIngredient> getRecipeIngredients(SQLiteDatabase db, long recipeId) {
         List<Recipe.RecipeIngredient> ingredients = new ArrayList<>();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_RECIPE_INGREDIENTS + " WHERE recipe_id = ?",
                 new String[]{String.valueOf(recipeId)});
 
         if (cursor.moveToFirst()) {
             do {
-                ingredients.add(new Recipe.RecipeIngredient(
-                        cursor.getString(cursor.getColumnIndexOrThrow("ingredient_name")),
-                        cursor.getDouble(cursor.getColumnIndexOrThrow("quantity")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("unit"))
-                ));
+                String name = cursor.getString(cursor.getColumnIndexOrThrow("ingredient_name"));
+                double qty = cursor.getDouble(cursor.getColumnIndexOrThrow("quantity"));
+                String unit = cursor.getString(cursor.getColumnIndexOrThrow("unit"));
+                ingredients.add(new Recipe.RecipeIngredient(name, qty, unit));
             } while (cursor.moveToNext());
         }
         cursor.close();
         return ingredients;
     }
 
-    // --- RECIPE SEEDING (15 Pre-loaded Recipes) ---
     private void seedRecipes(SQLiteDatabase db) {
         insertRecipeWithIngredients(db, "Scrambled Eggs", "Beat eggs with salt. Melt butter on pan and gently scramble eggs until cooked.",
                 new String[]{"egg", "butter", "salt"}, new double[]{2, 10, 1}, new String[]{"pcs", "g", "tsp"});
@@ -237,10 +239,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         for (String[] item : starterItems) {
             ContentValues values = new ContentValues();
-            values.put("name", item[0]);
-            values.put("quantity", Double.parseDouble(item[1]));
-            values.put("unit", item[2]);
-            values.put("expiry_date", item[3]);
+            values.put(COLUMN_NAME, item[0]);
+            values.put(COLUMN_QUANTITY, Double.parseDouble(item[1]));
+            values.put(COLUMN_UNIT, item[2]);
+            values.put(COLUMN_EXPIRY, item[3]);
             db.insert(TABLE_PANTRY, null, values);
         }
     }
