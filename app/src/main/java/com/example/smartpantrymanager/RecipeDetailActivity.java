@@ -33,7 +33,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
         textTitle.setText(recipe.getTitle());
 
-        DatabaseHelper dbHelper = new DatabaseHelper(this);
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
         List<Ingredient> pantryItems = dbHelper.getAllPantryItems();
 
         int missingCount = 0;

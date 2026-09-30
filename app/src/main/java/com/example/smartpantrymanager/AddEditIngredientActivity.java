@@ -25,7 +25,7 @@ public class AddEditIngredientActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
 
-        dbHelper = new DatabaseHelper(this);
+        dbHelper = DatabaseHelper.getInstance(this);
         etName = findViewById(R.id.editItemName);
         etQuantity = findViewById(R.id.editItemQuantity);
         etUnit = findViewById(R.id.editItemUnit);

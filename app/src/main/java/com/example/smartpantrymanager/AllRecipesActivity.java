@@ -22,7 +22,7 @@ public class AllRecipesActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
 
-        DatabaseHelper dbHelper = new DatabaseHelper(this);
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
         List<Recipe> allRecipes = dbHelper.getAllRecipes();
         List<Ingredient> pantryItems = dbHelper.getAllPantryItems();
 

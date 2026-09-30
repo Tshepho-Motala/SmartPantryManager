@@ -29,7 +29,7 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
 
-        dbHelper = new DatabaseHelper(this);
+        dbHelper = DatabaseHelper.getInstance(this);
         recyclerView = findViewById(R.id.recyclerSuggestedRecipes);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         textZeroMatch = findViewById(R.id.textZeroMatch);

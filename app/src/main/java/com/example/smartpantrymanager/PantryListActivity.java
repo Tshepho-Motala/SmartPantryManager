@@ -21,7 +21,7 @@ public class PantryListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_pantry_list);
         setTitle("Smart Pantry Inventory");
 
-        dbHelper = new DatabaseHelper(this);
+        dbHelper = DatabaseHelper.getInstance(this);
         recyclerViewPantry = findViewById(R.id.recyclerViewPantry);
         recyclerViewPantry.setLayoutManager(new LinearLayoutManager(this));
 
