@@ -57,6 +57,7 @@ public class AllRecipesActivity extends AppCompatActivity {
     private void setupBottomNav(int selectedItemId) {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavigationView);
         if (bottomNav != null) {
+            bottomNav.setOnItemSelectedListener(null);
             bottomNav.setSelectedItemId(selectedItemId);
             bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();

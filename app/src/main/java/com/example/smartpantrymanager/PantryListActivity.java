@@ -13,9 +13,7 @@ import java.util.List;
 public class PantryListActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewPantry;
-    private PantryAdapter adapter;
     private DatabaseHelper dbHelper;
-    private List<Ingredient> ingredientList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,27 +31,7 @@ public class PantryListActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNavigationView);
-        if (bottomNav != null) {
-            bottomNav.setSelectedItemId(R.id.nav_pantry);
-            bottomNav.setOnItemSelectedListener(item -> {
-                int id = item.getItemId();
-                if (id == R.id.nav_pantry) {
-                    return true;
-                } else if (id == R.id.nav_suggested) {
-                    startActivity(new Intent(PantryListActivity.this, SuggestedRecipesActivity.class));
-                    return true;
-                } else if (id == R.id.nav_recipes) {
-                    startActivity(new Intent(PantryListActivity.this, AllRecipesActivity.class));
-                    return true;
-                } else if (id == R.id.nav_settings) {
-                    startActivity(new Intent(PantryListActivity.this, SettingsActivity.class));
-                    return true;
-                }
-                return false;
-            });
-        }
-
+        setupBottomNav(R.id.nav_pantry);
         loadPantryItems();
     }
 
@@ -61,33 +39,68 @@ public class PantryListActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadPantryItems();
+        setupBottomNav(R.id.nav_pantry);
+    }
+
+    private void setupBottomNav(int selectedItemId) {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavigationView);
         if (bottomNav != null) {
-            bottomNav.setSelectedItemId(R.id.nav_pantry);
+            bottomNav.setOnItemSelectedListener(null);
+            bottomNav.setSelectedItemId(selectedItemId);
+            bottomNav.setOnItemSelectedListener(item -> {
+                int id = item.getItemId();
+                if (id == selectedItemId) {
+                    return true;
+                }
+                if (id == R.id.nav_pantry) {
+                    return true;
+                } else if (id == R.id.nav_suggested) {
+                    startActivity(new Intent(this, SuggestedRecipesActivity.class));
+                    finish();
+                    return true;
+                } else if (id == R.id.nav_recipes) {
+                    startActivity(new Intent(this, AllRecipesActivity.class));
+                    finish();
+                    return true;
+                } else if (id == R.id.nav_settings) {
+                    startActivity(new Intent(this, SettingsActivity.class));
+                    finish();
+                    return true;
+                }
+                return false;
+            });
         }
     }
 
     private void loadPantryItems() {
-        ingredientList = dbHelper.getAllPantryItems();
-        adapter = new PantryAdapter(ingredientList, new PantryAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(Ingredient ingredient) {
-                editItem(ingredient);
-            }
+        new Thread(() -> {
+            List<Ingredient> ingredientList = dbHelper.getAllPantryItems();
+            runOnUiThread(() -> {
+                PantryAdapter adapter = new PantryAdapter(ingredientList, new PantryAdapter.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(Ingredient ingredient) {
+                        editItem(ingredient);
+                    }
 
-            @Override
-            public void onEditClick(Ingredient selectedIngredient) {
-                editItem(selectedIngredient);
-            }
+                    @Override
+                    public void onEditClick(Ingredient selectedIngredient) {
+                        editItem(selectedIngredient);
+                    }
 
-            @Override
-            public void onDeleteClick(Ingredient selectedIngredient) {
-                dbHelper.deletePantryItem(selectedIngredient.getId());
-                Toast.makeText(PantryListActivity.this, "Item deleted", Toast.LENGTH_SHORT).show();
-                loadPantryItems();
-            }
-        });
-        recyclerViewPantry.setAdapter(adapter);
+                    @Override
+                    public void onDeleteClick(Ingredient selectedIngredient) {
+                        new Thread(() -> {
+                            dbHelper.deletePantryItem(selectedIngredient.getId());
+                            runOnUiThread(() -> {
+                                Toast.makeText(PantryListActivity.this, "Item deleted", Toast.LENGTH_SHORT).show();
+                                loadPantryItems();
+                            });
+                        }).start();
+                    }
+                });
+                recyclerViewPantry.setAdapter(adapter);
+            });
+        }).start();
     }
 
     private void editItem(Ingredient ingredient) {

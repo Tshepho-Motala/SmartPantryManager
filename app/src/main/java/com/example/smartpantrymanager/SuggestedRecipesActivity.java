@@ -57,6 +57,7 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
     private void setupBottomNav(int selectedItemId) {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavigationView);
         if (bottomNav != null) {
+            bottomNav.setOnItemSelectedListener(null);
             bottomNav.setSelectedItemId(selectedItemId);
             bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
@@ -84,43 +85,47 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
     }
 
     private void loadSuggestedRecipes() {
-        List<Recipe> allRecipes = dbHelper.getAllRecipes();
-        List<Ingredient> pantryItems = dbHelper.getAllPantryItems();
+        new Thread(() -> {
+            List<Recipe> allRecipes = dbHelper.getAllRecipes();
+            List<Ingredient> pantryItems = dbHelper.getAllPantryItems();
 
-        List<Recipe> suggested = new ArrayList<>();
-        for (Recipe recipe : allRecipes) {
-            boolean canMake = true;
-            for (Recipe.RecipeIngredient req : recipe.getRequiredIngredients()) {
-                boolean found = false;
-                for (Ingredient p : pantryItems) {
-                    if (isIngredientMatch(req.getName(), p.getName()) && p.getQuantity() >= req.getRequiredQuantity()) {
-                        found = true;
+            List<Recipe> suggested = new ArrayList<>();
+            for (Recipe recipe : allRecipes) {
+                boolean canMake = true;
+                for (Recipe.RecipeIngredient req : recipe.getRequiredIngredients()) {
+                    boolean found = false;
+                    for (Ingredient p : pantryItems) {
+                        if (isIngredientMatch(req.getName(), p.getName()) && p.getQuantity() >= req.getRequiredQuantity()) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        canMake = false;
                         break;
                     }
                 }
-                if (!found) {
-                    canMake = false;
-                    break;
+                if (canMake) {
+                    suggested.add(recipe);
                 }
             }
-            if (canMake) {
-                suggested.add(recipe);
-            }
-        }
 
-        if (suggested.isEmpty()) {
-            textZeroMatch.setVisibility(View.VISIBLE);
-            recyclerView.setVisibility(View.GONE);
-        } else {
-            textZeroMatch.setVisibility(View.GONE);
-            recyclerView.setVisibility(View.VISIBLE);
-            RecipeAdapter adapter = new RecipeAdapter(suggested, pantryItems, recipe -> {
-                Intent intent = new Intent(SuggestedRecipesActivity.this, RecipeDetailActivity.class);
-                intent.putExtra("RECIPE", recipe);
-                startActivity(intent);
+            runOnUiThread(() -> {
+                if (suggested.isEmpty()) {
+                    textZeroMatch.setVisibility(View.VISIBLE);
+                    recyclerView.setVisibility(View.GONE);
+                } else {
+                    textZeroMatch.setVisibility(View.GONE);
+                    recyclerView.setVisibility(View.VISIBLE);
+                    RecipeAdapter adapter = new RecipeAdapter(suggested, pantryItems, recipe -> {
+                        Intent intent = new Intent(SuggestedRecipesActivity.this, RecipeDetailActivity.class);
+                        intent.putExtra("RECIPE", recipe);
+                        startActivity(intent);
+                    });
+                    recyclerView.setAdapter(adapter);
+                }
             });
-            recyclerView.setAdapter(adapter);
-        }
+        }).start();
     }
 
     private boolean isIngredientMatch(String reqName, String pantryName) {
