@@ -8,18 +8,20 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
+/**
+ * PantryAdapter is a custom RecyclerView Adapter designed to display dynamic pantry inventory items
+ * bound from the SQLite database, supporting item click, edit, and delete actions.
+ */
 public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.PantryViewHolder> {
 
     public interface OnItemClickListener {
         void onItemClick(Ingredient ingredient);
-
         void onEditClick(Ingredient selectedIngredient);
-
         void onDeleteClick(Ingredient selectedIngredient);
     }
 
-    private List<Ingredient> ingredientList;
-    private OnItemClickListener listener;
+    private final List<Ingredient> ingredientList;
+    private final OnItemClickListener listener;
 
     public PantryAdapter(List<Ingredient> ingredientList, OnItemClickListener listener) {
         this.ingredientList = ingredientList;

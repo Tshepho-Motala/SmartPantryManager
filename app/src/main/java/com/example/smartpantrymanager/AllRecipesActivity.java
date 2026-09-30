@@ -9,6 +9,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.List;
 
+/**
+ * AllRecipesActivity displays the full collection of pre-loaded recipes stored in the database,
+ * indicating whether the user can make each recipe with their current pantry.
+ */
 public class AllRecipesActivity extends AppCompatActivity {
 
     @Override

@@ -8,15 +8,19 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
+/**
+ * RecipeAdapter is a custom RecyclerView Adapter that evaluates recipe requirements
+ * against user pantry items and displays cooking readiness status (Ready, Almost There, or Missing).
+ */
 public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeViewHolder> {
 
     public interface OnRecipeClickListener {
         void onRecipeClick(Recipe recipe);
     }
 
-    private List<Recipe> recipeList;
-    private List<Ingredient> pantryItems;
-    private OnRecipeClickListener listener;
+    private final List<Recipe> recipeList;
+    private final List<Ingredient> pantryItems;
+    private final OnRecipeClickListener listener;
 
     public RecipeAdapter(List<Recipe> recipeList, List<Ingredient> pantryItems, OnRecipeClickListener listener) {
         this.recipeList = recipeList;
@@ -55,6 +59,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
         public void bind(final Recipe recipe, List<Ingredient> pantryItems, final OnRecipeClickListener listener) {
             titleTextView.setText(recipe.getTitle());
 
+            // Check missing ingredients against pantry inventory
             int missingCount = 0;
             String missingName = "";
             for (Recipe.RecipeIngredient req : recipe.getRequiredIngredients()) {

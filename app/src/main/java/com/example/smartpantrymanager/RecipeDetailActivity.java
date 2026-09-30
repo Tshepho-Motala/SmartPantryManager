@@ -6,6 +6,10 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.List;
 
+/**
+ * RecipeDetailActivity displays the full required ingredient checklist (with check/cross status)
+ * and step-by-step preparation method for a selected recipe.
+ */
 public class RecipeDetailActivity extends AppCompatActivity {
 
     @Override
@@ -18,6 +22,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
 
+        // Receive recipe object passed via Intent
         Recipe recipe = (Recipe) getIntent().getSerializableExtra("RECIPE");
         if (recipe == null) {
             finish();

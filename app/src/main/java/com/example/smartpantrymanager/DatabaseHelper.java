@@ -8,6 +8,11 @@ import android.database.sqlite.SQLiteOpenHelper;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DatabaseHelper manages local SQLite persistence for the Smart Pantry Manager.
+ * Implements the Singleton pattern to ensure thread safety and prevent database connection leaks.
+ * Handles CRUD operations for Pantry items and pre-loads 15 recipes and starter pantry items.
+ */
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "smart_pantry_manager.db";
@@ -15,6 +20,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static DatabaseHelper instance;
 
+    /**
+     * Returns the singleton instance of DatabaseHelper.
+     * @param context Application context
+     * @return Shared DatabaseHelper instance
+     */
     public static synchronized DatabaseHelper getInstance(Context context) {
         if (instance == null) {
             instance = new DatabaseHelper(context.getApplicationContext());
@@ -38,6 +48,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        // Create pantry inventory table
         String CREATE_PANTRY_TABLE = "CREATE TABLE " + TABLE_PANTRY + " ("
                 + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + COLUMN_NAME + " TEXT NOT NULL, "
@@ -46,12 +57,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_EXPIRY + " TEXT)";
         db.execSQL(CREATE_PANTRY_TABLE);
 
+        // Create recipes collection table
         String createRecipesTable = "CREATE TABLE " + TABLE_RECIPES + " (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "title TEXT NOT NULL, " +
                 "instructions TEXT NOT NULL)";
         db.execSQL(createRecipesTable);
 
+        // Create recipe required ingredients table
         String createRecipeIngredientsTable = "CREATE TABLE " + TABLE_RECIPE_INGREDIENTS + " (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "recipe_id INTEGER, " +
@@ -61,6 +74,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "FOREIGN KEY(recipe_id) REFERENCES " + TABLE_RECIPES + "(id))";
         db.execSQL(createRecipeIngredientsTable);
 
+        // Seed 15 pre-loaded recipes and starter pantry items
         seedRecipes(db);
         seedStarterPantry(db);
     }
@@ -72,12 +86,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_RECIPE_INGREDIENTS);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_RECIPES);
         } catch (Exception e) {
-            // Ignore
+            // Ignore if tables do not exist
         }
         onCreate(db);
     }
 
-    // --- PANTRY CRUD ---
+    // --- PANTRY CRUD OPERATIONS ---
+
+    /**
+     * Inserts a new pantry item into the local SQLite database.
+     */
     public synchronized long addPantryItem(Ingredient ingredient) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -89,6 +107,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return db.insert(TABLE_PANTRY, null, values);
     }
 
+    /**
+     * Retrieves all pantry items sorted alphabetically by name.
+     */
     public synchronized List<Ingredient> getAllPantryItems() {
         List<Ingredient> itemList = new ArrayList<>();
         String selectQuery = "SELECT * FROM " + TABLE_PANTRY + " ORDER BY " + COLUMN_NAME + " ASC";
@@ -117,6 +138,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return itemList;
     }
 
+    /**
+     * Updates an existing pantry item record.
+     */
     public synchronized int updatePantryItem(Ingredient ingredient) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -129,12 +153,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 new String[]{String.valueOf(ingredient.getId())});
     }
 
+    /**
+     * Deletes a pantry item by its unique ID.
+     */
     public synchronized void deletePantryItem(long id) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_PANTRY, COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
     }
 
-    // --- RECIPES ---
+    // --- RECIPES RETRIEVAL & SEEDING ---
+
+    /**
+     * Retrieves all recipes along with their required ingredients.
+     */
     public synchronized List<Recipe> getAllRecipes() {
         List<Recipe> recipes = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
@@ -171,6 +202,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return ingredients;
     }
 
+    /**
+     * Seeds insert 15 recipes into the database on first run.
+     */
     private void seedRecipes(SQLiteDatabase db) {
         insertRecipeWithIngredients(db, "Scrambled Eggs", "Beat eggs with salt. Melt butter on pan and gently scramble eggs until cooked.",
                 new String[]{"egg", "butter", "salt"}, new double[]{2, 10, 1}, new String[]{"pcs", "g", "tsp"});
@@ -234,6 +268,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
+    /**
+     * Seeds initial starter pantry items so several recipes are immediately ready to cook.
+     */
     private void seedStarterPantry(SQLiteDatabase db) {
         String[][] starterItems = {
             {"egg", "6.0", "pcs", "2026-03-30"},
